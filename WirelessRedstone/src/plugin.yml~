@@ -1,6 +1,0 @@
-name: ComputerCraft
-main: za.net.quantumsicarius.wirelessredstone.WirelessRedstone
-version: 0.0.1
-depend: [Spout]
-authors: [Quantum-Sicarius,Guy_de_Siguro]
-
