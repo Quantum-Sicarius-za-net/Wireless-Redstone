@@ -1,6 +1,6 @@
 name: WirelessRedstone
 main: za.net.quantumsicarius.wirelessredstone.WirelessRedstone
-version: 0.0.1
+version: 0.0.5
 depend: [Spout]
 authors: [Quantum-Sicarius,Guy_de_Siguro]
 
