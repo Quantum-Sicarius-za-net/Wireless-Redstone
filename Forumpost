@@ -7,7 +7,7 @@
 
 [LEFT][B]Video:[/B][/LEFT]
 [LEFT][spoiler]
-[LEFT][URL][/URL]Coming soon![/LEFT]
+[LEFT][URL]http://www.youtube.com/watch?v=7sK97GsChx4[/URL][/LEFT]
 [/spoiler][/LEFT]
 
 [LEFT][B]Recipes:[/B][/LEFT]
@@ -44,6 +44,10 @@
 
 [LEFT][B]ChangeLog:[/B][/LEFT]
 [LEFT][spoiler]
+[LEFT][B]v0.0.7:[/B][/LEFT]
+[LIST]
+[*]Vastly improved the redstone detection, Switches now work. Redstone paths now work.
+[/LIST]
 [LEFT][B]v0.0.5:[/B][/LEFT]
 [LIST]
 [*]Added GUI and Channels (Right Click to open)

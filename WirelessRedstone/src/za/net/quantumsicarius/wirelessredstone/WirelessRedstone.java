@@ -211,26 +211,28 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 		
 		SpoutBlock b = (SpoutBlock) event.getBlock();
 		
-		if (b.isBlockPowered()) {
+		//System.out.println("The block is: " + b.getName());
 			
-			SpoutBlock variant_block = side_block(b, Transmitter_Block_off, null);
-			
-			if (variant_block.getCustomBlock() == Transmitter_Block_off) {
-				System.out.println("The Transmitter block is powered!!!!!");
-				SpoutManager.getMaterialManager().overrideBlock(variant_block , Transmitter_Block_on);
+		SpoutBlock variant_block = side_block(b, Transmitter_Block_off, null);
+		
+		if (variant_block.getCustomBlock() == Transmitter_Block_off) {
+			if (!variant_block.isBlockPowered() || !variant_block.isBlockIndirectlyPowered()) {
 				
+			//System.out.println("The Transmitter block is powered!!!!!");
+			SpoutManager.getMaterialManager().overrideBlock(variant_block , Transmitter_Block_on);
+					
 				spout_Transmitter_block_on.add(variant_block);
 				// Add the ArrayList to the HashMap (List of all transmitters on a certain channel)
 				tansmitter_blocks_on_channel.put(block_channel.get(b), spout_Transmitter_block_on);
-				
+					
 				for (int i = 0; i < spout_Reciever_block.size(); i++) {
 					if (block_channel.get(spout_Reciever_block.get(i)) == block_channel.get(variant_block)) {
 						SpoutManager.getMaterialManager().overrideBlock(spout_Reciever_block.get(i), Reciever_Block_on);
 						spout_Reciever_block.get(i).setBlockPowered(true);
-						
+							
 						for (int a = 0; a < 4; a++) {
 							SpoutBlock red_stone_wire = side_block(spout_Reciever_block.get(i), null, Material.REDSTONE_WIRE);
-							
+								
 							if (red_stone_wire.getType() == Material.REDSTONE_WIRE) {
 								red_stone_wire.setType(Material.REDSTONE_TORCH_ON);
 							}
@@ -240,33 +242,35 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 			}
 		}
 		else {
-			System.out.println("The block is un-powered!!!!!");
-			
-			SpoutBlock variant_block = side_block(b, Transmitter_Block_on, null);
+			variant_block = side_block(b, Transmitter_Block_on, null);
 			
 			if (variant_block.getCustomBlock() == Transmitter_Block_on) {
-				SpoutManager.getMaterialManager().overrideBlock(variant_block , Transmitter_Block_off);
-				
-				spout_Transmitter_block_on.remove(variant_block);
-				// Add the ArrayList to the HashMap (List of all transmitters on a certain channel)
-				tansmitter_blocks_on_channel.put(block_channel.get(variant_block), spout_Transmitter_block_on);
-				
-				System.out.println("Reciever Blocks in world: " + spout_Reciever_block.size());
-				System.out.println("Transmitter Blocks in world: " + spout_Transmitter_block_on.size());
-				
-				for (int i = 0; i < spout_Reciever_block.size(); i++) {
-					// If the reciever block is on the same channel as the transmitter
-					if (block_channel.get(spout_Reciever_block.get(i)) == block_channel.get(variant_block)) {
-						if (tansmitter_blocks_on_channel.get(block_channel.get(variant_block)).size() == 0) {
-							SpoutManager.getMaterialManager().overrideBlock(spout_Reciever_block.get(i), Reciever_Block_off);
-							spout_Reciever_block.get(i).setBlockPowered(false);
-							
-							for (int a = 0; a < 4; a++) {
-								
-								SpoutBlock red_stone_wire = side_block(spout_Reciever_block.get(i), null, Material.REDSTONE_TORCH_ON);
-								
-								if (red_stone_wire.getType() == Material.REDSTONE_TORCH_ON) {
-									red_stone_wire.setType(Material.REDSTONE_WIRE);
+				if (variant_block.isBlockPowered() || variant_block.isBlockIndirectlyPowered()){
+				//System.out.println("The block is un-powered!!!!!");
+					
+					SpoutManager.getMaterialManager().overrideBlock(variant_block, Transmitter_Block_off);
+						
+					spout_Transmitter_block_on.remove(variant_block);
+					// Add the ArrayList to the HashMap (List of all transmitters on a certain channel)
+					tansmitter_blocks_on_channel.put(block_channel.get(variant_block), spout_Transmitter_block_on);
+					
+					//System.out.println("Reciever Blocks in world: " + spout_Reciever_block.size());
+					//System.out.println("Transmitter Blocks in world: " + spout_Transmitter_block_on.size());
+						
+					for (int i = 0; i < spout_Reciever_block.size(); i++) {
+						// If the reciever block is on the same channel as the transmitter
+						if (block_channel.get(spout_Reciever_block.get(i)) == block_channel.get(variant_block)) {
+							if (tansmitter_blocks_on_channel.get(block_channel.get(variant_block)).size() == 0) {
+								SpoutManager.getMaterialManager().overrideBlock(spout_Reciever_block.get(i), Reciever_Block_off);
+								spout_Reciever_block.get(i).setBlockPowered(false);
+									
+								for (int a = 0; a < 4; a++) {
+										
+									SpoutBlock red_stone_wire = side_block(spout_Reciever_block.get(i), null, Material.REDSTONE_TORCH_ON);
+									
+									if (red_stone_wire.getType() == Material.REDSTONE_TORCH_ON) {
+										red_stone_wire.setType(Material.REDSTONE_WIRE);
+									}
 								}
 							}
 						}
@@ -275,6 +279,7 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 			}
 		}
 	}
+		
 	
 	public SpoutBlock side_block(SpoutBlock block, CustomBlock custom_block, Material normal_block) {
 		
@@ -291,15 +296,19 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 		
 	    if (normal_block == null) {
 			if (block_right.getCustomBlock() == custom_block) {
+				System.out.println("Block Right is the transmitter");
 				return block_right;
 			}
 			else if (block_left.getCustomBlock() == custom_block) {
+				System.out.println("Block left is the transmitter");
 				return block_left;
 			}
-			else if (block_front == custom_block) {
+			else if (block_front.getCustomBlock() == custom_block) {
+				System.out.println("Block front is the transmitter");
 				return block_front;
 			}
-			else if (block_back == custom_block) {
+			else if (block_back.getCustomBlock() == custom_block) {
+				System.out.println("Block back is the transmitter");
 				return block_back;
 			}
 			else {
