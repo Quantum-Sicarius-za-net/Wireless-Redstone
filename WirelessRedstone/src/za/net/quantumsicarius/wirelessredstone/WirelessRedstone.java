@@ -51,7 +51,7 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 	HashMap<SpoutPlayer, SpoutBlock> player_block_clicked = new HashMap<SpoutPlayer, SpoutBlock>();
 	
 	// Channel and list
-	HashMap<Integer, ArrayList<SpoutBlock>> tansmitter_blocks_on_channel = new HashMap<Integer, ArrayList<SpoutBlock>>();
+	HashMap<Integer, ArrayList<SpoutBlock>> transmitter_blocks_on_channel = new HashMap<Integer, ArrayList<SpoutBlock>>();
 	HashMap<Integer, ArrayList<SpoutBlock>> reciever_blocks_on_channel = new HashMap<Integer, ArrayList<SpoutBlock>>();
 	
 	GUI gui;
@@ -124,18 +124,44 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 	@EventHandler
 	public void buttonPress(ButtonClickEvent event) {
 		if (player_GUI.containsKey(event.getPlayer())) {
+			
 			if (player_GUI.get(event.getPlayer()).isAddButton(event.getButton())) {
 				System.out.println("Add button pressed");
 				
-				int block_channel_increment = block_channel.get(player_block_clicked.get(event.getPlayer())) + 1;
-				
-				// Remove the block from the old channel
 				SpoutBlock the_block = player_block_clicked.get(event.getPlayer());
-				if (tansmitter_blocks_on_channel.containsKey(block_channel.get(the_block))) {
-					tansmitter_blocks_on_channel.get(block_channel.get(the_block)).remove(the_block);
+				
+				if (player_GUI.get(event.getPlayer()).title() == "Transmitter") {
+					// Remove the block from the old channel
+					transmitter_blocks_on_channel.get(block_channel.get(the_block)).remove(the_block);
+					System.out.println("Removing the block from the list, there are now: " + transmitter_blocks_on_channel.get(block_channel.get(the_block)).size());
+					
+					// Update the receiver
+					ReceiverUpdate(the_block);
+					
+					// Update to new channel
+					int block_channel_decrement = block_channel.get(the_block) + 1;
+					block_channel.put((SpoutBlock) the_block, block_channel_decrement);
+					
+					// Add the new channel
+					if (!transmitter_blocks_on_channel.containsKey(block_channel.get(the_block))) {
+						System.out.println("The channel doesn't exsist creating! Channel: " + (block_channel.get(the_block)));
+						transmitter_blocks_on_channel.put(block_channel.get(the_block), new ArrayList<SpoutBlock>());
+					}
+					
+					// If the block is powered add him!
+					if (the_block.isBlockPowered() || the_block.isBlockFacePowered(BlockFace.NORTH) || the_block.isBlockFacePowered(BlockFace.SOUTH) || the_block.isBlockFacePowered(BlockFace.WEST) || the_block.isBlockFacePowered(BlockFace.EAST)) {
+						transmitter_blocks_on_channel.get(block_channel.get(the_block)).add(the_block);
+						System.out.println("Adding the block to the list, there are now: " + transmitter_blocks_on_channel.get(block_channel.get(the_block)).size());
+					}
+				}
+				else {
+					// Update to new channel
+					int block_channel_decrement = block_channel.get(the_block) + 1;
+					block_channel.put((SpoutBlock) player_block_clicked.get(event.getPlayer()), block_channel_decrement);
 				}
 				
-				block_channel.put((SpoutBlock) player_block_clicked.get(event.getPlayer()), block_channel_increment);
+				// Update the receiver
+				ReceiverUpdate(the_block);
 				
 				System.out.println("Channel: " + block_channel.get((SpoutBlock) player_block_clicked.get(event.getPlayer())));
 				player_GUI.get(event.getPlayer()).updateGUI(event.getPlayer(), block_channel.get((SpoutBlock) player_block_clicked.get(event.getPlayer())));
@@ -143,15 +169,40 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 			else if (player_GUI.get(event.getPlayer()).isSubtractButton(event.getButton())) {
 				System.out.println("Subtract button pressed");
 				
-				int block_channel_decrement = block_channel.get(player_block_clicked.get(event.getPlayer())) - 1;
-				
-				// Remove the block from the old channel
 				SpoutBlock the_block = player_block_clicked.get(event.getPlayer());
-				if (tansmitter_blocks_on_channel.containsKey(block_channel.get(the_block))) {
-					tansmitter_blocks_on_channel.get(block_channel.get(the_block)).remove(the_block);
+				
+				if (player_GUI.get(event.getPlayer()).title() == "Transmitter") {
+					// Remove the block from the old channel
+					transmitter_blocks_on_channel.get(block_channel.get(the_block)).remove(the_block);
+					System.out.println("Removing the block from the list, there are now: " + transmitter_blocks_on_channel.get(block_channel.get(the_block)).size());
+					
+					// Update the receiver
+					ReceiverUpdate(the_block);
+					
+					// Update to new channel
+					int block_channel_decrement = block_channel.get(the_block) - 1;
+					block_channel.put((SpoutBlock) the_block, block_channel_decrement);
+					
+					// Add the new channel
+					if (!transmitter_blocks_on_channel.containsKey(block_channel.get(the_block))) {
+						System.out.println("The channel doesn't exsist creating! Channel: " + (block_channel.get(the_block)));
+						transmitter_blocks_on_channel.put(block_channel.get(the_block), new ArrayList<SpoutBlock>());
+					}
+					// If the block is powered add him!
+					if (the_block.isBlockPowered() || the_block.isBlockFacePowered(BlockFace.NORTH) || the_block.isBlockFacePowered(BlockFace.SOUTH) || the_block.isBlockFacePowered(BlockFace.WEST) || the_block.isBlockFacePowered(BlockFace.EAST)) {
+						transmitter_blocks_on_channel.get(block_channel.get(the_block)).add(the_block);
+						System.out.println("Adding the block to the list, there are now: " + transmitter_blocks_on_channel.get(block_channel.get(the_block)).size());
+					}
+				}
+				else {
+					// Update to new channel
+					int block_channel_decrement = block_channel.get(the_block) - 1;
+					block_channel.put((SpoutBlock) the_block, block_channel_decrement);
 				}
 				
-				block_channel.put((SpoutBlock) player_block_clicked.get(event.getPlayer()), block_channel_decrement);
+				// Update the receiver
+				ReceiverUpdate(the_block);
+				
 				
 				System.out.println("Channel: " + block_channel.get((SpoutBlock) player_block_clicked.get(event.getPlayer())));
 				
@@ -194,10 +245,17 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 		if (block.getCustomBlock() == Reciever_Block_off) {
 			spout_Reciever_block.add(block);
 			block_channel.put(block, 0);
+			
+			// Update Receiver
+			ReceiverUpdate(block);
 		}
 		
 		else if (block.getCustomBlock() == Transmitter_Block_off) {
 			block_channel.put(block, 0);
+			
+			if (!transmitter_blocks_on_channel.containsKey(block_channel.get(block))) {
+				transmitter_blocks_on_channel.put(block_channel.get(block), new ArrayList<SpoutBlock>());
+			}
 			
 			if (block.isBlockPowered() || block.isBlockFacePowered(BlockFace.NORTH) || block.isBlockFacePowered(BlockFace.SOUTH) || block.isBlockFacePowered(BlockFace.WEST) || block.isBlockFacePowered(BlockFace.EAST)) {
 				PowerChange(block, true);
@@ -222,8 +280,15 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 			}
 		}
 		else if (block.getCustomBlock() == Transmitter_Block_off | block.getCustomBlock() == Transmitter_Block_on) {
-			tansmitter_blocks_on_channel.get(block_channel.get(block)).remove(block);
+			// Remove block from the List
+			if (transmitter_blocks_on_channel.containsKey(block_channel.get(block))) {
+				transmitter_blocks_on_channel.get(block_channel.get(block)).remove(block);
+			}
 			
+			if (block.getCustomBlock() == Transmitter_Block_on) {
+				ReceiverUpdate(block);
+				System.out.println("Updating the receiver block");
+			}
 			block.setType(Material.AIR);
 		}
 	}
@@ -302,47 +367,43 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 		if (on_off) {
 			
 			// Create a new ArrayList if there isn't one for this channel
-			if (!tansmitter_blocks_on_channel.containsKey(block_channel.get(block))) {
+			if (!transmitter_blocks_on_channel.containsKey(block_channel.get(block))) {
 				System.out.println("The channel doesn't exsist creating!");
-				tansmitter_blocks_on_channel.put(block_channel.get(block), new ArrayList<SpoutBlock>());
+				transmitter_blocks_on_channel.put(block_channel.get(block), new ArrayList<SpoutBlock>());
 			}
 			
-			tansmitter_blocks_on_channel.get(block_channel.get(block)).add(block);
+			transmitter_blocks_on_channel.get(block_channel.get(block)).add(block);
 			
-			System.out.println("There are: " + tansmitter_blocks_on_channel.get(block_channel.get(block)).size() + " on channel: " + block_channel.get(block));
+			System.out.println("There are: " + transmitter_blocks_on_channel.get(block_channel.get(block)).size() + " on channel: " + block_channel.get(block));
 			
 			//System.out.println("The Transmitter block is powered!!!!!");
 			SpoutManager.getMaterialManager().overrideBlock(block , Transmitter_Block_on);
-					
-			for (int i = 0; i < spout_Reciever_block.size(); i++) {
-				if (block_channel.get(spout_Reciever_block.get(i)) == block_channel.get(block)) {
-					SpoutManager.getMaterialManager().overrideBlock(spout_Reciever_block.get(i), Reciever_Block_on);
-					
-					// Enable power on all four faces
-					for (int a = 0; a < 4; a++) {
-						SpoutBlock adjacent_block = side_block(spout_Reciever_block.get(i), a);
-						adjacent_block.setBlockPowered(true);
-					}
-				}
-			}
+			
+			ReceiverUpdate(block);
 		}
 		// Off
 		else {
 			
 			// Create a new ArrayList if there isn't one for this channel
-			if (!tansmitter_blocks_on_channel.containsKey(block_channel.get(block))) {
-				tansmitter_blocks_on_channel.put(block_channel.get(block), new ArrayList<SpoutBlock>());
+			if (!transmitter_blocks_on_channel.containsKey(block_channel.get(block))) {
+				transmitter_blocks_on_channel.put(block_channel.get(block), new ArrayList<SpoutBlock>());
 			}
 			
-			tansmitter_blocks_on_channel.get(block_channel.get(block)).remove(block);		
+			transmitter_blocks_on_channel.get(block_channel.get(block)).remove(block);		
 			
 			SpoutManager.getMaterialManager().overrideBlock(block, Transmitter_Block_off);
 			
-			for (int i = 0; i < spout_Reciever_block.size(); i++) {
-				// If the receiver block is on the same channel as the transmitter
-				if (block_channel.get(spout_Reciever_block.get(i)) == block_channel.get(block)) {
-					if (tansmitter_blocks_on_channel.get(block_channel.get(block)).size() == 0) {
-						
+			ReceiverUpdate(block);
+		}
+		
+	}
+	public void ReceiverUpdate(SpoutBlock block) {
+		//System.out.println("Receiver update!!!");
+		for (int i = 0; i < spout_Reciever_block.size(); i++) {
+			// If the receiver block is on the same channel as the transmitter
+			if (block_channel.get(spout_Reciever_block.get(i)) == block_channel.get(block)) {
+				if (transmitter_blocks_on_channel.containsKey(block_channel.get(block))) {
+					if (transmitter_blocks_on_channel.get(block_channel.get(block)).size() == 0) {
 						SpoutManager.getMaterialManager().overrideBlock(spout_Reciever_block.get(i), Reciever_Block_off);
 						
 						// Disable power on all four faces
@@ -351,11 +412,18 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 							adjacent_block.setBlockPowered(false);
 						}
 					}
+					else {
+						SpoutManager.getMaterialManager().overrideBlock(spout_Reciever_block.get(i), Reciever_Block_on);
+							
+						// Enable power on all four faces
+						for (int a = 0; a < 4; a++) {
+							SpoutBlock adjacent_block = side_block(spout_Reciever_block.get(i), a);
+							adjacent_block.setBlockPowered(true);
+						}
+					}
 				}
 			}
-		
 		}
-		
-	}	
+	}
 
 }

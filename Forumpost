@@ -45,6 +45,10 @@
 
 [LEFT][B]ChangeLog:[/B][/LEFT]
 [LEFT][spoiler]
+[LEFT][B]v0.1.0:[/B][/LEFT]
+[LIST]
+[*]Receivers now have extensive updating
+[/LIST]
 [LEFT][B]v0.0.9:[/B][/LEFT]
 [LIST]
 [*] Improved Redstone detection even more

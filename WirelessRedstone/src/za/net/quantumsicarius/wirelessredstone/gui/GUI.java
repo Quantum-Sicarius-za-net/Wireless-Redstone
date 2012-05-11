@@ -19,9 +19,12 @@ public class GUI {
 	GenericButton subtract;
 	
 	Plugin plugin;
+	String title_head;
 
 	public GUI(String title_string, int frequancy_string, Plugin wirelessredstone_plugin, SpoutPlayer player) {
 		plugin = wirelessredstone_plugin;
+		
+		title_head = title_string;
 		
 		title = new GenericLabel(ChatColor.GREEN + title_string);
 		frequancy = new GenericLabel(ChatColor.AQUA + "Channel: " + ChatColor.WHITE + Integer.toString(frequancy_string));
@@ -45,6 +48,10 @@ public class GUI {
 	public void updateGUI(SpoutPlayer player, int frequancy_num) {
 		frequancy.setText(ChatColor.AQUA + "Channel: " + ChatColor.WHITE + Integer.toString(frequancy_num));
 		player.getMainScreen().getActivePopup().updateWidget(frequancy);
+	}
+	
+	public String title() {
+		return title_head;
 	}
 	
 	public boolean isAddButton(Button button) {

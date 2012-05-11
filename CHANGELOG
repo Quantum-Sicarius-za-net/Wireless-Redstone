@@ -1,3 +1,6 @@
+## v0.1.0
+* Receivers now have extensive updating
+
 ## v0.0.9
 * Improved Redstone detection even more
 * The receiver block no longer uses torches
