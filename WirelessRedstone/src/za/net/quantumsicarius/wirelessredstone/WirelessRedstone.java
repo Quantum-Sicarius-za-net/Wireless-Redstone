@@ -5,12 +5,13 @@ import java.util.HashMap;
 
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.BlockFace;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
@@ -44,7 +45,6 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 	private static CustomBlock Reciever_Block_off;
 	
 	ArrayList<SpoutBlock> spout_Reciever_block = new ArrayList<SpoutBlock>();
-	ArrayList<SpoutBlock> spout_Transmitter_block_on = new ArrayList<SpoutBlock>();
 	
 	HashMap<SpoutBlock, Integer> block_channel = new HashMap<SpoutBlock, Integer>();
 	HashMap<SpoutPlayer, GUI> player_GUI = new HashMap<SpoutPlayer, GUI>();
@@ -59,9 +59,6 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 	@Override
 	public void onDisable() {
 		System.out.println("Disabled!");
-		
-		//this.getConfig().set("Reciever_Block", spout_Reciever_block);
-		//this.saveConfig();
 	}
 
 	@Override
@@ -74,11 +71,11 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 		// Register event listeners
 		getServer().getPluginManager().registerEvents(this, this);
 		
-		//spout_Reciever_block = (ArrayList<SpoutBlock>) this.getConfig().get("Reciever_Block");
-		
-		//if (spout_Reciever_block == null) {
-		//	spout_Reciever_block = new ArrayList<SpoutBlock>();
-		//}
+		// Load preLogin cache
+		SpoutManager.getFileManager().addToPreLoginCache(this, "http://s13.postimage.org/u2noy7pab/tx_On.png");
+		SpoutManager.getFileManager().addToPreLoginCache(this, "http://s17.postimage.org/xp94lmdln/tx_Off.png");
+		SpoutManager.getFileManager().addToPreLoginCache(this, "http://s7.postimage.org/owy3ah9vb/rx_On.png");
+		SpoutManager.getFileManager().addToPreLoginCache(this, "ttp://s16.postimage.org/q6fezbnht/rx_Off.png");
 	}
 	
 	private void loadItems() {
@@ -131,6 +128,13 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 				System.out.println("Add button pressed");
 				
 				int block_channel_increment = block_channel.get(player_block_clicked.get(event.getPlayer())) + 1;
+				
+				// Remove the block from the old channel
+				SpoutBlock the_block = player_block_clicked.get(event.getPlayer());
+				if (tansmitter_blocks_on_channel.containsKey(block_channel.get(the_block))) {
+					tansmitter_blocks_on_channel.get(block_channel.get(the_block)).remove(the_block);
+				}
+				
 				block_channel.put((SpoutBlock) player_block_clicked.get(event.getPlayer()), block_channel_increment);
 				
 				System.out.println("Channel: " + block_channel.get((SpoutBlock) player_block_clicked.get(event.getPlayer())));
@@ -140,6 +144,13 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 				System.out.println("Subtract button pressed");
 				
 				int block_channel_decrement = block_channel.get(player_block_clicked.get(event.getPlayer())) - 1;
+				
+				// Remove the block from the old channel
+				SpoutBlock the_block = player_block_clicked.get(event.getPlayer());
+				if (tansmitter_blocks_on_channel.containsKey(block_channel.get(the_block))) {
+					tansmitter_blocks_on_channel.get(block_channel.get(the_block)).remove(the_block);
+				}
+				
 				block_channel.put((SpoutBlock) player_block_clicked.get(event.getPlayer()), block_channel_decrement);
 				
 				System.out.println("Channel: " + block_channel.get((SpoutBlock) player_block_clicked.get(event.getPlayer())));
@@ -178,7 +189,6 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 	@EventHandler
 	public void BlockPlace(BlockPlaceEvent event) {
 		
-		System.out.println("Block Place event!");
 		SpoutBlock block = (SpoutBlock) event.getBlock();
 		
 		if (block.getCustomBlock() == Reciever_Block_off) {
@@ -188,6 +198,10 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 		
 		else if (block.getCustomBlock() == Transmitter_Block_off) {
 			block_channel.put(block, 0);
+			
+			if (block.isBlockPowered() || block.isBlockFacePowered(BlockFace.NORTH) || block.isBlockFacePowered(BlockFace.SOUTH) || block.isBlockFacePowered(BlockFace.WEST) || block.isBlockFacePowered(BlockFace.EAST)) {
+				PowerChange(block, true);
+			}
 		}
 	}
 	
@@ -198,82 +212,54 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 		
 		if (block.getCustomBlock() == Reciever_Block_off | block.getCustomBlock() == Reciever_Block_on) {
 			spout_Reciever_block.remove(block);
+			
+			if (block.getCustomBlock() == Reciever_Block_on) {
+				
+				block.setBlockPowered(false);
+				for (int i = 0; i < 4; i++) {
+					side_block(block, i).setBlockPowered(false);
+				}
+			}
 		}
 		else if (block.getCustomBlock() == Transmitter_Block_off | block.getCustomBlock() == Transmitter_Block_on) {
-			spout_Transmitter_block_on.remove(block);
-			// Add the ArrayList to the HashMap (List of all transmitters on a certain channel)
-			tansmitter_blocks_on_channel.put(block_channel.get(block), spout_Transmitter_block_on);
+			tansmitter_blocks_on_channel.get(block_channel.get(block)).remove(block);
+			
+			block.setType(Material.AIR);
 		}
 	}
 	
 	@EventHandler
-	public void redStoneEvent(BlockRedstoneEvent event) {
+	public void redStoneEvent(BlockPhysicsEvent event) {
 		
 		SpoutBlock b = (SpoutBlock) event.getBlock();
 		
-		//System.out.println("The block is: " + b.getName());
-			
-		SpoutBlock variant_block = side_block(b, Transmitter_Block_off, null);
+		SpoutBlock variant_block = b;
 		
-		if (variant_block.getCustomBlock() == Transmitter_Block_off) {
-			if (!variant_block.isBlockPowered() || !variant_block.isBlockIndirectlyPowered()) {
-				
-			//System.out.println("The Transmitter block is powered!!!!!");
-			SpoutManager.getMaterialManager().overrideBlock(variant_block , Transmitter_Block_on);
-					
-				spout_Transmitter_block_on.add(variant_block);
-				// Add the ArrayList to the HashMap (List of all transmitters on a certain channel)
-				tansmitter_blocks_on_channel.put(block_channel.get(b), spout_Transmitter_block_on);
-					
-				for (int i = 0; i < spout_Reciever_block.size(); i++) {
-					if (block_channel.get(spout_Reciever_block.get(i)) == block_channel.get(variant_block)) {
-						SpoutManager.getMaterialManager().overrideBlock(spout_Reciever_block.get(i), Reciever_Block_on);
-						spout_Reciever_block.get(i).setBlockPowered(true);
-							
-						for (int a = 0; a < 4; a++) {
-							SpoutBlock red_stone_wire = side_block(spout_Reciever_block.get(i), null, Material.REDSTONE_WIRE);
-								
-							if (red_stone_wire.getType() == Material.REDSTONE_WIRE) {
-								red_stone_wire.setType(Material.REDSTONE_TORCH_ON);
-							}
-						}
-					}
-				}
+		for (int i = 0; i < 4; i++) {
+			if (side_block(b, i).getCustomBlock() == Transmitter_Block_off) {
+				variant_block = side_block(b, i);
+				break;
 			}
 		}
-		else {
-			variant_block = side_block(b, Transmitter_Block_on, null);
-			
-			if (variant_block.getCustomBlock() == Transmitter_Block_on) {
-				if (variant_block.isBlockPowered() || variant_block.isBlockIndirectlyPowered()){
-				//System.out.println("The block is un-powered!!!!!");
-					
-					SpoutManager.getMaterialManager().overrideBlock(variant_block, Transmitter_Block_off);
-						
-					spout_Transmitter_block_on.remove(variant_block);
-					// Add the ArrayList to the HashMap (List of all transmitters on a certain channel)
-					tansmitter_blocks_on_channel.put(block_channel.get(variant_block), spout_Transmitter_block_on);
-					
-					//System.out.println("Reciever Blocks in world: " + spout_Reciever_block.size());
-					//System.out.println("Transmitter Blocks in world: " + spout_Transmitter_block_on.size());
-						
-					for (int i = 0; i < spout_Reciever_block.size(); i++) {
-						// If the reciever block is on the same channel as the transmitter
-						if (block_channel.get(spout_Reciever_block.get(i)) == block_channel.get(variant_block)) {
-							if (tansmitter_blocks_on_channel.get(block_channel.get(variant_block)).size() == 0) {
-								SpoutManager.getMaterialManager().overrideBlock(spout_Reciever_block.get(i), Reciever_Block_off);
-								spout_Reciever_block.get(i).setBlockPowered(false);
-									
-								for (int a = 0; a < 4; a++) {
-										
-									SpoutBlock red_stone_wire = side_block(spout_Reciever_block.get(i), null, Material.REDSTONE_TORCH_ON);
-									
-									if (red_stone_wire.getType() == Material.REDSTONE_TORCH_ON) {
-										red_stone_wire.setType(Material.REDSTONE_WIRE);
-									}
-								}
-							}
-						}
+		// A check to see if we are working with the custom blocks, so that we do not repeat to many for loops.
+		if (variant_block.getCustomBlock() == Transmitter_Block_on | variant_block.getCustomBlock() == Transmitter_Block_off) {
+			if (variant_block.getCustomBlock() == Transmitter_Block_off) {
+				if (variant_block.isBlockPowered() || variant_block.isBlockFacePowered(BlockFace.NORTH) || variant_block.isBlockFacePowered(BlockFace.SOUTH) || variant_block.isBlockFacePowered(BlockFace.WEST) || variant_block.isBlockFacePowered(BlockFace.EAST)) {
+					PowerChange(variant_block, true);
+				}
+			}
+			else {
+				
+				for (int i = 0; i < 4; i++) {
+					if (side_block(b, i).getCustomBlock() == Transmitter_Block_on) {
+						variant_block = side_block(b, i);
+						break;
+					}
+				}
+				
+				if (variant_block.getCustomBlock() == Transmitter_Block_on) {
+					if (!variant_block.isBlockPowered() || !variant_block.isBlockFaceIndirectlyPowered(BlockFace.NORTH) || !variant_block.isBlockFaceIndirectlyPowered(BlockFace.SOUTH) || !variant_block.isBlockFaceIndirectlyPowered(BlockFace.WEST) || !variant_block.isBlockFaceIndirectlyPowered(BlockFace.EAST)){
+						PowerChange(variant_block, false);
 					}
 				}
 			}
@@ -281,7 +267,7 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 	}
 		
 	
-	public SpoutBlock side_block(SpoutBlock block, CustomBlock custom_block, Material normal_block) {
+	public SpoutBlock side_block(SpoutBlock block,int side) {
 		
 		World w = block.getWorld();
 		
@@ -293,46 +279,83 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 	    SpoutBlock block_front = (SpoutBlock) w.getBlockAt(block.getLocation().getBlockX() +1, block.getLocation().getBlockY(), block.getLocation().getBlockZ());
 	    // X-
 	    SpoutBlock block_back = (SpoutBlock) w.getBlockAt(block.getLocation().getBlockX() -1, block.getLocation().getBlockY(), block.getLocation().getBlockZ());
-		
-	    if (normal_block == null) {
-			if (block_right.getCustomBlock() == custom_block) {
-				System.out.println("Block Right is the transmitter");
-				return block_right;
-			}
-			else if (block_left.getCustomBlock() == custom_block) {
-				System.out.println("Block left is the transmitter");
-				return block_left;
-			}
-			else if (block_front.getCustomBlock() == custom_block) {
-				System.out.println("Block front is the transmitter");
-				return block_front;
-			}
-			else if (block_back.getCustomBlock() == custom_block) {
-				System.out.println("Block back is the transmitter");
-				return block_back;
-			}
-			else {
-				return block;
-			}
-	    }
-	    else {
-			if (block_right.getType() == normal_block) {
-				return block_right;
-			}
-			else if (block_left.getType() == normal_block) {
-				return block_left;
-			}
-			else if (block_front.getType() == normal_block) {
-				return block_front;
-			}
-			else if (block_back.getType() == normal_block) {
-				return block_back;
-			}
-			else {
-				return block;
-			}
-	    }
+	    
+		if (side == 0) {
+			return block_right;
+		}
+		else if (side == 1) {
+			return block_left;
+		}
+		else if (side == 2) {
+			return block_front;
+		}
+		else if (side == 3) {
+			return block_back;
+		}
+		return block;
 
 	}
+	
+	public void PowerChange(SpoutBlock block, boolean on_off) {
+
+		// On
+		if (on_off) {
+			
+			// Create a new ArrayList if there isn't one for this channel
+			if (!tansmitter_blocks_on_channel.containsKey(block_channel.get(block))) {
+				System.out.println("The channel doesn't exsist creating!");
+				tansmitter_blocks_on_channel.put(block_channel.get(block), new ArrayList<SpoutBlock>());
+			}
+			
+			tansmitter_blocks_on_channel.get(block_channel.get(block)).add(block);
+			
+			System.out.println("There are: " + tansmitter_blocks_on_channel.get(block_channel.get(block)).size() + " on channel: " + block_channel.get(block));
+			
+			//System.out.println("The Transmitter block is powered!!!!!");
+			SpoutManager.getMaterialManager().overrideBlock(block , Transmitter_Block_on);
+					
+			for (int i = 0; i < spout_Reciever_block.size(); i++) {
+				if (block_channel.get(spout_Reciever_block.get(i)) == block_channel.get(block)) {
+					SpoutManager.getMaterialManager().overrideBlock(spout_Reciever_block.get(i), Reciever_Block_on);
+					
+					// Enable power on all four faces
+					for (int a = 0; a < 4; a++) {
+						SpoutBlock adjacent_block = side_block(spout_Reciever_block.get(i), a);
+						adjacent_block.setBlockPowered(true);
+					}
+				}
+			}
+		}
+		// Off
+		else {
+			
+			// Create a new ArrayList if there isn't one for this channel
+			if (!tansmitter_blocks_on_channel.containsKey(block_channel.get(block))) {
+				tansmitter_blocks_on_channel.put(block_channel.get(block), new ArrayList<SpoutBlock>());
+			}
+			
+			tansmitter_blocks_on_channel.get(block_channel.get(block)).remove(block);		
+			
+			SpoutManager.getMaterialManager().overrideBlock(block, Transmitter_Block_off);
+			
+			for (int i = 0; i < spout_Reciever_block.size(); i++) {
+				// If the receiver block is on the same channel as the transmitter
+				if (block_channel.get(spout_Reciever_block.get(i)) == block_channel.get(block)) {
+					if (tansmitter_blocks_on_channel.get(block_channel.get(block)).size() == 0) {
+						
+						SpoutManager.getMaterialManager().overrideBlock(spout_Reciever_block.get(i), Reciever_Block_off);
+						
+						// Disable power on all four faces
+						for (int a = 0; a < 4; a++) {	
+							SpoutBlock adjacent_block = side_block(spout_Reciever_block.get(i), a);
+							adjacent_block.setBlockPowered(false);
+						}
+					}
+				}
+			}
+		
+		}
+		
+	}	
 
 }
