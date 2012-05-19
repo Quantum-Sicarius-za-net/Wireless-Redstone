@@ -3,7 +3,7 @@
 [CENTER][B][SIZE=5]The SpoutPlugin Port![/SIZE][/B][/CENTER]
 [CENTER][B][SIZE=5]By Quantum-Sicarius[/SIZE][/B][/CENTER]
 
-[CENTER]This is Pre-Alpha stuff, The Blocks aren't saved! So when you restart the server your receiver blocks don't work! This is not to be used in a public server yet. Please don't report bugs on this thread, since there are hundreds/millions of bugs left! This is a Pre-Alpha![/CENTER]
+[CENTER]Wireless Redstone is a Minecraft modification that allows you to transmit and receive redstone signals without wires.[/CENTER]
 
 [LEFT][B]Video:[/B][/LEFT]
 [LEFT][spoiler]
@@ -45,6 +45,10 @@
 
 [LEFT][B]ChangeLog:[/B][/LEFT]
 [LEFT][spoiler]
+[LEFT][B]v0.2.0:[/B][/LEFT]
+[LIST]
+[*]Blocks now save!
+[/LIST]
 [LEFT][B]v0.1.0:[/B][/LEFT]
 [LIST]
 [*]Receivers now have extensive updating
