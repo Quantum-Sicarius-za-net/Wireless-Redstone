@@ -1,7 +1,25 @@
+/*
+This file is part of WirelessRedstone.
+
+WirelessRedstone is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+WirelessRedstone is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with WirelessRedstone.  If not, see http://www.gnu.org/licenses/.
+*/
+
 package za.net.quantumsicarius.wirelessredstone;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map.Entry;
 
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -30,7 +48,10 @@ import za.net.quantumsicarius.wirelessredstone.Blocks.RecieverBlock;
 import za.net.quantumsicarius.wirelessredstone.Blocks.TransmitterBlock;
 import za.net.quantumsicarius.wirelessredstone.gui.GUI;
 
-public class WirelessRedstone extends JavaPlugin implements Listener {
+public class WirelessRedstone extends JavaPlugin implements Listener{
+	
+	//SaveAndLoad saveLoad;
+	Serialize serial = new Serialize();
 	
 	private static Texture Transmitter_Texture_on;
 	private static CustomBlock Transmitter_Block_on;
@@ -44,26 +65,56 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 	private static Texture Reciever_Texture_off;
 	private static CustomBlock Reciever_Block_off;
 	
-	ArrayList<SpoutBlock> spout_Reciever_block = new ArrayList<SpoutBlock>();
-	
-	HashMap<SpoutBlock, Integer> block_channel = new HashMap<SpoutBlock, Integer>();
 	HashMap<SpoutPlayer, GUI> player_GUI = new HashMap<SpoutPlayer, GUI>();
 	HashMap<SpoutPlayer, SpoutBlock> player_block_clicked = new HashMap<SpoutPlayer, SpoutBlock>();
 	
-	// Channel and list
-	HashMap<Integer, ArrayList<SpoutBlock>> transmitter_blocks_on_channel = new HashMap<Integer, ArrayList<SpoutBlock>>();
-	HashMap<Integer, ArrayList<SpoutBlock>> reciever_blocks_on_channel = new HashMap<Integer, ArrayList<SpoutBlock>>();
+	// This stores the channel to a specific block
+	HashMap<SpoutBlock, Integer> block_channel;
+	// This is the list off all receiver blocks
+	ArrayList<SpoutBlock> spout_Reciever_block;
+	// This stores the Channel to the list of active transmitters on that specified channel
+	HashMap<Integer, ArrayList<SpoutBlock>> transmitter_blocks_on_channel;
 	
 	GUI gui;
 	
 	@Override
 	public void onDisable() {
 		System.out.println("Disabled!");
+		
+		try {
+			// Save the block channels	
+			for (Entry<SpoutBlock, Integer> entry : block_channel.entrySet())
+			{
+				serial.SerializeBlock(entry.getKey(), entry.getValue());
+			}
+			
+			// Save the Receiver List
+			serial.SaveBlockList(spout_Reciever_block);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override
 	public void onEnable() {
 		System.out.println("Enabled!");
+		
+		/// Load Block Channels
+		block_channel = serial.deserialize();
+		
+		// Load Receiver blocks
+		spout_Reciever_block = serial.deserializeList();
+		
+		if (block_channel == null) {
+			block_channel = new HashMap<SpoutBlock, Integer>();
+		}
+		if (transmitter_blocks_on_channel == null) {
+			transmitter_blocks_on_channel  = new HashMap<Integer, ArrayList<SpoutBlock>>();
+		}
+		if (spout_Reciever_block == null) {
+			spout_Reciever_block  = new ArrayList<SpoutBlock>();
+		}
 		
 		loadItems();
 		loadRecipes();
@@ -83,6 +134,7 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
     	Transmitter_Block_on = new TransmitterBlock(this, Transmitter_Texture_on, "Wireless Transmitter On");
     	
     	Transmitter_Texture_off = new Texture(this, "http://s17.postimage.org/xp94lmdln/tx_Off.png", 32, 32, 32);
+    	
     	Transmitter_Block_off = new TransmitterBlock(this, Transmitter_Texture_off, "Wireless Transmitter Off");
     	
        	Reciever_Texture_on = new Texture(this, "http://s7.postimage.org/owy3ah9vb/rx_On.png", 32, 32, 32);
@@ -126,38 +178,38 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 		if (player_GUI.containsKey(event.getPlayer())) {
 			
 			if (player_GUI.get(event.getPlayer()).isAddButton(event.getButton())) {
-				System.out.println("Add button pressed");
+				//System.out.println("Add button pressed");
 				
 				SpoutBlock the_block = player_block_clicked.get(event.getPlayer());
 				
 				if (player_GUI.get(event.getPlayer()).title() == "Transmitter") {
 					// Remove the block from the old channel
 					transmitter_blocks_on_channel.get(block_channel.get(the_block)).remove(the_block);
-					System.out.println("Removing the block from the list, there are now: " + transmitter_blocks_on_channel.get(block_channel.get(the_block)).size());
+					//System.out.println("Removing the block from the list, there are now: " + transmitter_blocks_on_channel.get(block_channel.get(the_block)).size());
 					
 					// Update the receiver
 					ReceiverUpdate(the_block);
 					
 					// Update to new channel
 					int block_channel_decrement = block_channel.get(the_block) + 1;
-					block_channel.put((SpoutBlock) the_block, block_channel_decrement);
+					block_channel.put(the_block, block_channel_decrement);
 					
 					// Add the new channel
 					if (!transmitter_blocks_on_channel.containsKey(block_channel.get(the_block))) {
-						System.out.println("The channel doesn't exsist creating! Channel: " + (block_channel.get(the_block)));
+						//System.out.println("The channel doesn't exsist creating! Channel: " + (block_channel.get(the_block)));
 						transmitter_blocks_on_channel.put(block_channel.get(the_block), new ArrayList<SpoutBlock>());
 					}
 					
 					// If the block is powered add him!
 					if (the_block.isBlockPowered() || the_block.isBlockFacePowered(BlockFace.NORTH) || the_block.isBlockFacePowered(BlockFace.SOUTH) || the_block.isBlockFacePowered(BlockFace.WEST) || the_block.isBlockFacePowered(BlockFace.EAST)) {
 						transmitter_blocks_on_channel.get(block_channel.get(the_block)).add(the_block);
-						System.out.println("Adding the block to the list, there are now: " + transmitter_blocks_on_channel.get(block_channel.get(the_block)).size());
+						//System.out.println("Adding the block to the list, there are now: " + transmitter_blocks_on_channel.get(block_channel.get(the_block)).size());
 					}
 				}
 				else {
 					// Update to new channel
 					int block_channel_decrement = block_channel.get(the_block) + 1;
-					block_channel.put((SpoutBlock) player_block_clicked.get(event.getPlayer()), block_channel_decrement);
+					block_channel.put(player_block_clicked.get(event.getPlayer()), block_channel_decrement);
 				}
 				
 				// Update the receiver
@@ -174,30 +226,30 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 				if (player_GUI.get(event.getPlayer()).title() == "Transmitter") {
 					// Remove the block from the old channel
 					transmitter_blocks_on_channel.get(block_channel.get(the_block)).remove(the_block);
-					System.out.println("Removing the block from the list, there are now: " + transmitter_blocks_on_channel.get(block_channel.get(the_block)).size());
+					//System.out.println("Removing the block from the list, there are now: " + transmitter_blocks_on_channel.get(block_channel.get(the_block)).size());
 					
 					// Update the receiver
 					ReceiverUpdate(the_block);
 					
 					// Update to new channel
 					int block_channel_decrement = block_channel.get(the_block) - 1;
-					block_channel.put((SpoutBlock) the_block, block_channel_decrement);
+					block_channel.put(the_block, block_channel_decrement);
 					
 					// Add the new channel
 					if (!transmitter_blocks_on_channel.containsKey(block_channel.get(the_block))) {
-						System.out.println("The channel doesn't exsist creating! Channel: " + (block_channel.get(the_block)));
+						//System.out.println("The channel doesn't exsist creating! Channel: " + (block_channel.get(the_block)));
 						transmitter_blocks_on_channel.put(block_channel.get(the_block), new ArrayList<SpoutBlock>());
 					}
 					// If the block is powered add him!
 					if (the_block.isBlockPowered() || the_block.isBlockFacePowered(BlockFace.NORTH) || the_block.isBlockFacePowered(BlockFace.SOUTH) || the_block.isBlockFacePowered(BlockFace.WEST) || the_block.isBlockFacePowered(BlockFace.EAST)) {
 						transmitter_blocks_on_channel.get(block_channel.get(the_block)).add(the_block);
-						System.out.println("Adding the block to the list, there are now: " + transmitter_blocks_on_channel.get(block_channel.get(the_block)).size());
+						//System.out.println("Adding the block to the list, there are now: " + transmitter_blocks_on_channel.get(block_channel.get(the_block)).size());
 					}
 				}
 				else {
 					// Update to new channel
 					int block_channel_decrement = block_channel.get(the_block) - 1;
-					block_channel.put((SpoutBlock) the_block, block_channel_decrement);
+					block_channel.put(the_block, block_channel_decrement);
 				}
 				
 				// Update the receiver
@@ -269,6 +321,12 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 		SpoutBlock block = (SpoutBlock) event.getBlock();
 		
 		if (block.getCustomBlock() == Reciever_Block_off | block.getCustomBlock() == Reciever_Block_on) {
+			// Remove block from the HashMap
+			if (block_channel.containsKey(block)) {
+				block_channel.remove(block);
+			}
+			
+			// Remove from List
 			spout_Reciever_block.remove(block);
 			
 			if (block.getCustomBlock() == Reciever_Block_on) {
@@ -280,6 +338,11 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 			}
 		}
 		else if (block.getCustomBlock() == Transmitter_Block_off | block.getCustomBlock() == Transmitter_Block_on) {
+			// Remove block from the HashMap
+			if (block_channel.containsKey(block)) {
+				block_channel.remove(block);
+			}
+			
 			// Remove block from the List
 			if (transmitter_blocks_on_channel.containsKey(block_channel.get(block))) {
 				transmitter_blocks_on_channel.get(block_channel.get(block)).remove(block);
@@ -374,7 +437,7 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 			
 			transmitter_blocks_on_channel.get(block_channel.get(block)).add(block);
 			
-			System.out.println("There are: " + transmitter_blocks_on_channel.get(block_channel.get(block)).size() + " on channel: " + block_channel.get(block));
+			//System.out.println("There are: " + transmitter_blocks_on_channel.get(block_channel.get(block)).size() + " on channel: " + block_channel.get(block));
 			
 			//System.out.println("The Transmitter block is powered!!!!!");
 			SpoutManager.getMaterialManager().overrideBlock(block , Transmitter_Block_on);
@@ -406,6 +469,8 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 					if (transmitter_blocks_on_channel.get(block_channel.get(block)).size() == 0) {
 						SpoutManager.getMaterialManager().overrideBlock(spout_Reciever_block.get(i), Reciever_Block_off);
 						
+						block.setBlockPowered(false);
+						
 						// Disable power on all four faces
 						for (int a = 0; a < 4; a++) {	
 							SpoutBlock adjacent_block = side_block(spout_Reciever_block.get(i), a);
@@ -414,7 +479,9 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 					}
 					else {
 						SpoutManager.getMaterialManager().overrideBlock(spout_Reciever_block.get(i), Reciever_Block_on);
-							
+						
+						block.setBlockPowered(true);
+						
 						// Enable power on all four faces
 						for (int a = 0; a < 4; a++) {
 							SpoutBlock adjacent_block = side_block(spout_Reciever_block.get(i), a);
@@ -425,5 +492,4 @@ public class WirelessRedstone extends JavaPlugin implements Listener {
 			}
 		}
 	}
-
 }
