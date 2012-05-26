@@ -25,6 +25,6 @@ import org.getspout.spoutapi.material.block.GenericCubeCustomBlock;
 
 public class RecieverBlock  extends GenericCubeCustomBlock{
 	public RecieverBlock(Plugin plugin, Texture texture, String s) {
-		super(plugin, s, true, new GenericCubeBlockDesign(plugin, texture, 0));
+		super(plugin, s, true, new GenericCubeBlockDesign(plugin, texture, new int[] { 1, 0, 0, 0, 0, 1 }));
 	}
 }

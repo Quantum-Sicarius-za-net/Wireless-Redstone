@@ -32,6 +32,7 @@ import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.getspout.spoutapi.SpoutManager;
@@ -123,24 +124,24 @@ public class WirelessRedstone extends JavaPlugin implements Listener{
 		getServer().getPluginManager().registerEvents(this, this);
 		
 		// Load preLogin cache
-		SpoutManager.getFileManager().addToPreLoginCache(this, "http://s13.postimage.org/u2noy7pab/tx_On.png");
-		SpoutManager.getFileManager().addToPreLoginCache(this, "http://s17.postimage.org/xp94lmdln/tx_Off.png");
-		SpoutManager.getFileManager().addToPreLoginCache(this, "http://s7.postimage.org/owy3ah9vb/rx_On.png");
-		SpoutManager.getFileManager().addToPreLoginCache(this, "ttp://s16.postimage.org/q6fezbnht/rx_Off.png");
+		//SpoutManager.getFileManager().addToPreLoginCache(this, "http://s13.postimage.org/u2noy7pab/tx_On.png");
+		//SpoutManager.getFileManager().addToPreLoginCache(this, "http://s17.postimage.org/xp94lmdln/tx_Off.png");
+		//SpoutManager.getFileManager().addToPreLoginCache(this, "http://s7.postimage.org/owy3ah9vb/rx_On.png");
+		//SpoutManager.getFileManager().addToPreLoginCache(this, "ttp://s16.postimage.org/q6fezbnht/rx_Off.png");
 	}
 	
 	private void loadItems() {
-    	Transmitter_Texture_on = new Texture(this, "http://s13.postimage.org/u2noy7pab/tx_On.png", 32, 32, 32);
+		
+    	Transmitter_Texture_on = new Texture(this, "http://s14.postimage.org/6morwcyn1/Transmitter_On.png", 64, 32, 32);
     	Transmitter_Block_on = new TransmitterBlock(this, Transmitter_Texture_on, "Wireless Transmitter On");
     	
-    	Transmitter_Texture_off = new Texture(this, "http://s17.postimage.org/xp94lmdln/tx_Off.png", 32, 32, 32);
-    	
+    	Transmitter_Texture_off = new Texture(this, "http://s9.postimage.org/jutkuqhjv/Transmitter_Off.png", 64, 32, 32);
     	Transmitter_Block_off = new TransmitterBlock(this, Transmitter_Texture_off, "Wireless Transmitter Off");
     	
-       	Reciever_Texture_on = new Texture(this, "http://s7.postimage.org/owy3ah9vb/rx_On.png", 32, 32, 32);
+       	Reciever_Texture_on = new Texture(this, "http://s13.postimage.org/4y344bdmb/Reciever_On.png", 64, 32, 32);
     	Reciever_Block_on = new RecieverBlock(this, Reciever_Texture_on, "Wireless Reciever On");
     	
-       	Reciever_Texture_off = new Texture(this, "http://s16.postimage.org/q6fezbnht/rx_Off.png", 32, 32, 32);
+       	Reciever_Texture_off = new Texture(this, "http://s14.postimage.org/hwhhrb3od/Receiver_Off.png", 64, 32, 32);
     	Reciever_Block_off = new RecieverBlock(this, Reciever_Texture_off, "Wireless Reciever off");
 	}
 	
@@ -340,19 +341,29 @@ public class WirelessRedstone extends JavaPlugin implements Listener{
 		else if (block.getCustomBlock() == Transmitter_Block_off | block.getCustomBlock() == Transmitter_Block_on) {
 			// Remove block from the HashMap
 			if (block_channel.containsKey(block)) {
+				// Remove block from the List
+				if (transmitter_blocks_on_channel.containsKey(block_channel.get(block))) {
+					transmitter_blocks_on_channel.get(block_channel.get(block)).remove(block);
+				}
+				
+				// Remove the block
+				ReceiverUpdate(block);
 				block_channel.remove(block);
 			}
 			
-			// Remove block from the List
-			if (transmitter_blocks_on_channel.containsKey(block_channel.get(block))) {
-				transmitter_blocks_on_channel.get(block_channel.get(block)).remove(block);
-			}
-			
-			if (block.getCustomBlock() == Transmitter_Block_on) {
-				ReceiverUpdate(block);
-				System.out.println("Updating the receiver block");
-			}
 			block.setType(Material.AIR);
+		}
+	}
+	
+	// Checks whether the chunk that unloads is a chunk with a receiver on and if it is, cancel the event.
+	@EventHandler
+	public void chunkUnload(ChunkUnloadEvent event) {
+		for (int i = 0; i < spout_Reciever_block.size(); i++) {
+			if (event.getChunk() == spout_Reciever_block.get(i).getChunk()) {
+				System.out.println("Stopped chunk from unloading!");
+				event.setCancelled(true);
+				event.getChunk().load(true);
+			}
 		}
 	}
 	
@@ -372,7 +383,12 @@ public class WirelessRedstone extends JavaPlugin implements Listener{
 		// A check to see if we are working with the custom blocks, so that we do not repeat to many for loops.
 		if (variant_block.getCustomBlock() == Transmitter_Block_on | variant_block.getCustomBlock() == Transmitter_Block_off) {
 			if (variant_block.getCustomBlock() == Transmitter_Block_off) {
-				if (variant_block.isBlockPowered() || variant_block.isBlockFacePowered(BlockFace.NORTH) || variant_block.isBlockFacePowered(BlockFace.SOUTH) || variant_block.isBlockFacePowered(BlockFace.WEST) || variant_block.isBlockFacePowered(BlockFace.EAST)) {
+				if (variant_block.isBlockPowered() 
+						|| variant_block.isBlockFaceIndirectlyPowered(BlockFace.NORTH)
+						|| variant_block.isBlockFaceIndirectlyPowered(BlockFace.SOUTH)
+						|| variant_block.isBlockFaceIndirectlyPowered(BlockFace.EAST)
+						|| variant_block.isBlockFaceIndirectlyPowered(BlockFace.WEST) 
+						|| variant_block.isBlockFaceIndirectlyPowered(BlockFace.DOWN)) {
 					PowerChange(variant_block, true);
 				}
 			}
@@ -386,7 +402,12 @@ public class WirelessRedstone extends JavaPlugin implements Listener{
 				}
 				
 				if (variant_block.getCustomBlock() == Transmitter_Block_on) {
-					if (!variant_block.isBlockPowered() || !variant_block.isBlockFaceIndirectlyPowered(BlockFace.NORTH) || !variant_block.isBlockFaceIndirectlyPowered(BlockFace.SOUTH) || !variant_block.isBlockFaceIndirectlyPowered(BlockFace.WEST) || !variant_block.isBlockFaceIndirectlyPowered(BlockFace.EAST)){
+					if (!variant_block.isBlockPowered() 
+						|| !variant_block.isBlockFaceIndirectlyPowered(BlockFace.NORTH) 
+						|| !variant_block.isBlockFaceIndirectlyPowered(BlockFace.SOUTH) 
+						|| !variant_block.isBlockFaceIndirectlyPowered(BlockFace.WEST) 
+						|| !variant_block.isBlockFaceIndirectlyPowered(BlockFace.EAST)
+						|| !variant_block.isBlockFaceIndirectlyPowered(BlockFace.DOWN)){
 						PowerChange(variant_block, false);
 					}
 				}
