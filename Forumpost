@@ -23,7 +23,7 @@
 [LEFT][B]Requirements:[/B][/LEFT]
 [LEFT][spoiler]
 [LIST]
-[*]Bukkit 1.2.5R1.0
+[*]Bukkit 1.2.5-R2.0
 [*]SpoutPlugin Latest
 [/LIST]
 [/spoiler][/LEFT]
@@ -45,6 +45,15 @@
 
 [LEFT][B]ChangeLog:[/B][/LEFT]
 [LEFT][spoiler]
+[LEFT][B]v0.2.1:[/B][/LEFT]
+[LIST]
+[*]Fixed a small logic bug!
+[*]Added the top texture. 
+[/LIST]
+[LEFT][B]v0.2.0:[/B][/LEFT]
+[LIST]
+[*]Blocks now save!
+[/LIST]
 [LEFT][B]v0.2.0:[/B][/LEFT]
 [LIST]
 [*]Blocks now save!
