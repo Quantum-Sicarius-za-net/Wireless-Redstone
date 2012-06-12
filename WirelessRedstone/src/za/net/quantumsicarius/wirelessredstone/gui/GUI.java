@@ -18,8 +18,8 @@ along with WirelessRedstone.  If not, see http://www.gnu.org/licenses/.
 
 package za.net.quantumsicarius.wirelessredstone.gui;
 
+import org.bukkit.ChatColor;
 import org.bukkit.plugin.Plugin;
-import org.getspout.commons.ChatColor;
 import org.getspout.spoutapi.gui.Button;
 import org.getspout.spoutapi.gui.GenericButton;
 import org.getspout.spoutapi.gui.GenericContainer;

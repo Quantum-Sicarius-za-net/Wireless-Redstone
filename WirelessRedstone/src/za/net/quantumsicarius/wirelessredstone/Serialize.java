@@ -99,7 +99,8 @@ public class Serialize {
 		
 		System.out.println("Found block at: X: " + x + " Y: " + y+ " Z: " + z +" In world: " + world);
 		
-		return (SpoutBlock) Bukkit.getWorld(world).getBlockAt(x, y, z);
+		SpoutBlock block = (SpoutBlock) Bukkit.getWorld(world).getBlockAt(x, y, z);
+		return block;
 	}
 	// Saves Reciever List (SERIALIZE)
 	public void SaveBlockList(ArrayList<SpoutBlock> list) {
@@ -159,10 +160,10 @@ public class Serialize {
 			int y = yml.getInt(Integer.toString(i) + ".y");
 			int z = yml.getInt(Integer.toString(i) + ".z");
 			
-			System.out.println("Found block at: X: " + x + " Y: " + y+ " Z: " + z +" In world: " + world);
+			System.out.println("Read block at: X: " + x + " Y: " + y+ " Z: " + z +" In world: " + world);
 			SpoutBlock block = (SpoutBlock) Bukkit.getWorld(world).getBlockAt(x, y, z);
-			
 			deserializedblocks.add(block);
+			
 		}
 		
 		file_recievers_list.delete();
