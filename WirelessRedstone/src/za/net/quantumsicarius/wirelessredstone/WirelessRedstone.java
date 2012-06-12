@@ -87,8 +87,21 @@ public class WirelessRedstone extends JavaPlugin implements Listener{
 			for (Entry<SpoutBlock, Integer> entry : block_channel.entrySet())
 			{
 				// Check if block still exists
-				if (CheckBlock(entry.getKey())) {
+				if (entry.getKey().getCustomBlock() == Transmitter_Block_on 
+						| entry.getKey().getCustomBlock() == Transmitter_Block_off
+						| entry.getKey().getCustomBlock() == Reciever_Block_on
+						| entry.getKey().getCustomBlock() == Reciever_Block_off) {
+					
 					serial.SerializeBlock(entry.getKey(), entry.getValue());
+					
+				} else {
+					if (transmitter_blocks_on_channel.containsKey(entry.getKey())) {
+						transmitter_blocks_on_channel.remove(entry.getKey());
+					}
+					
+					if (spout_Reciever_block.contains(entry.getKey())) {
+						spout_Reciever_block.remove(entry.getKey());
+					}
 				}
 			}
 			
@@ -452,6 +465,10 @@ public class WirelessRedstone extends JavaPlugin implements Listener{
 	
 	public boolean CheckBlock(SpoutBlock block) {
 		
+		if (block.isEmpty() | block.isLiquid() | block.getType() == Material.AIR) {
+			return false;
+		}
+		
 		if (block.getCustomBlock() == Transmitter_Block_on 
 			| block.getCustomBlock() == Transmitter_Block_off
 			| block.getCustomBlock() == Reciever_Block_on
@@ -462,6 +479,9 @@ public class WirelessRedstone extends JavaPlugin implements Listener{
 			/*
 			 * Clean the array(s)
 			 */
+			if (block_channel.containsKey(block)) {
+				block_channel.remove(block);
+			}
 			
 			if (transmitter_blocks_on_channel.containsKey(block)) {
 				transmitter_blocks_on_channel.remove(block);
@@ -521,6 +541,7 @@ public class WirelessRedstone extends JavaPlugin implements Listener{
 		
 		// Check if block exists
 		if (!CheckBlock(block)) {
+			System.out.println("The block doesn't exist, returning!");
 			return;
 		}
 		
