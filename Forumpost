@@ -23,13 +23,14 @@
 [LEFT][B]Requirements:[/B][/LEFT]
 [LEFT][spoiler]
 [LIST]
-[*]Bukkit 1.2.5-R3.0
+[*]Bukkit 1.2.5-R4.0
 [*]SpoutPlugin Latest
 [/LIST]
 [/spoiler][/LEFT]
 
 [LEFT][B]Downloads:[/B][/LEFT]
 [LEFT][spoiler]
+[LEFT][B]The TOP download is the latest![/B][/LEFT]
 [LEFT][URL]https://github.com/Quantum-Sicarius-za-net/Wireless-Redstone/downloads[/URL][/LEFT]
 [/spoiler][/LEFT]
 
@@ -45,6 +46,11 @@
 
 [LEFT][B]ChangeLog:[/B][/LEFT]
 [LEFT][spoiler]
+[LEFT][B]v0.2.2:[/B][/LEFT]
+[LIST]
+[*]Now works on latest build
+[*]The saving now makes sure that the blocks exists
+[/LIST]
 [LEFT][B]v0.2.1:[/B][/LEFT]
 [LIST]
 [*]Fixed a small logic bug!
